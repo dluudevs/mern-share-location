@@ -27,7 +27,7 @@ const DUMMY_PLACES = [
 ];
 
 const UserPlaces = () => {
-  // hook returns an object with dynamic segments (eg., the colon)
+  // hook returns an object with dynamic segments (eg., the colon in the route path="/:userId/places")
   // since this component's parent route has a dynamic element in the route, it is used here
   const userId = useParams().userId;
   const loadedPlaces = DUMMY_PLACES.filter(places => places.creator === userId)
