@@ -1,4 +1,4 @@
-import React, { useReducer } from "react";
+import React, { useReducer, useEffect } from "react";
 
 import { validate } from "../../util/validators";
 import "./Input.css";
@@ -14,20 +14,27 @@ const inputReducer = (state, action) => {
     case "TOUCH":
       return {
         ...state,
-        isTouched: true
-      }
+        isTouched: true,
+      };
     default:
       return state;
   }
 };
 
 const Input = (props) => {
-  // useReducer hook takes a callback function and initial state as arguments 
+  // useReducer hook takes a callback function and initial state as arguments
   const [inputState, dispatch] = useReducer(inputReducer, {
     value: "",
     isValid: false,
-    isTouched: false
+    isTouched: false,
   });
+
+  const { onInput, id } = props;
+  const { value, isValid } = inputState;
+
+  useEffect(() => {
+    onInput(id, value, isValid);
+  }, [onInput, id, value, isValid]);
 
   const changeHandler = (event) => {
     // argument inside of dispatch is the action object that is passed to inputReducer
@@ -40,9 +47,9 @@ const Input = (props) => {
 
   const touchHandler = () => {
     dispatch({
-      type: 'TOUCH',
-    })
-  }
+      type: "TOUCH",
+    });
+  };
 
   const element =
     props.element === "input" ? (
@@ -52,7 +59,7 @@ const Input = (props) => {
         placeholder={props.placeholder}
         onChange={changeHandler}
         // onBlur is when element loses focus. eg., use clicks into input and then clicks out
-        // without onBlur handler to change isTouched, the form will load in error state before user has a chance to interact with the forn
+        // without onBlur handler to change isTouched, the form will load in error state before user has a chance to interact with the form
         onBlur={touchHandler}
         value={inputState.value}
       />
