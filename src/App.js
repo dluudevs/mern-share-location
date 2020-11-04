@@ -9,6 +9,7 @@ import {
 import Users from './user/pages/Users';
 import NewPlace from './places/pages/NewPlace';
 import UserPlaces from './places/pages/UserPlaces';
+import UpdatePlace from './places/pages/UpdatePlace';
 import MainNavigation from './shared/components/Navigation/MainNavigation';
 
 // by default router parses routes from top to bottom
@@ -31,8 +32,12 @@ function App() {
           <Route path="/:userId/places" exact>
             <UserPlaces />
           </Route>
+          {/* this route must be rendered before /place/:placeId otherwise new would be interpreted as a :placeid */}
           <Route path="/places/new" exact>
             <NewPlace />
+          </Route>
+          <Route path="/places/:placeId" exact>
+            <UpdatePlace />
           </Route>
           <Redirect to="/" />
         </Switch>

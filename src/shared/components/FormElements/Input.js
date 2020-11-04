@@ -24,8 +24,8 @@ const inputReducer = (state, action) => {
 const Input = (props) => {
   // useReducer hook takes a callback function and initial state as arguments
   const [inputState, dispatch] = useReducer(inputReducer, {
-    value: "",
-    isValid: false,
+    value: props.value || "",
+    isValid: props.valid || false,
     isTouched: false,
   });
 
