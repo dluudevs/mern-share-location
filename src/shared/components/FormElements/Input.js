@@ -3,6 +3,10 @@ import React, { useReducer, useEffect } from "react";
 import { validate } from "../../util/validators";
 import "./Input.css";
 
+// Value of the input component is bound to it's internal state
+// However that value is also passed to onInput, a prop that was passed from the useForm hook which manages the state of the form
+// When the value of the input changes, input's reducer updates the value in state. useEffect then fires off and passes the value to useForm
+
 const inputReducer = (state, action) => {
   switch (action.type) {
     case "CHANGE":
@@ -24,14 +28,17 @@ const inputReducer = (state, action) => {
 const Input = (props) => {
   // useReducer hook takes a callback function and initial state as arguments
   const [inputState, dispatch] = useReducer(inputReducer, {
-    value: props.value || "",
-    isValid: props.valid || false,
+    value: props.initialValue || "",
+    isValid: props.initialValid || false,
     isTouched: false,
   });
 
   const { onInput, id } = props;
   const { value, isValid } = inputState;
 
+  // useEffect will always get called on component mount, onInput is always called on mount
+  // when called dispatch from useForm is called, which will check the validity of the form. if initialized with valid form and invalid input, the form will
+  // be changed to invalid because dispatch is called in useEffect
   useEffect(() => {
     onInput(id, value, isValid);
   }, [onInput, id, value, isValid]);

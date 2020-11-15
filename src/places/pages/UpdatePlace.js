@@ -8,6 +8,8 @@ import {
   VALIDATOR_MINLENGTH,
 } from "../../shared/util/validators";
 
+
+import { useForm } from '../../shared/hooks/form-hook'
 import './PlaceForm.css'
 
 const DUMMY_PLACES = [
@@ -36,8 +38,13 @@ const DUMMY_PLACES = [
 const UpdatePlace = () => {
   // placeId property is identifier for dynamic portion of route
   const placeId = useParams().placeId;
-
+  
   const identifiedPlace = DUMMY_PLACES.find((p) => p.id === placeId);
+  
+  const [ formState, inputHandler ] = useForm({
+    title: { value: identifiedPlace.title, isValid: false},
+    description: { value: identifiedPlace.description, isValid: true}
+  }, true)
 
   if (!identifiedPlace) {
     return (
@@ -55,9 +62,9 @@ const UpdatePlace = () => {
         label="Title"
         validators={[VALIDATOR_REQUIRE()]}
         errorText="Please enter a valid title."
-        onInput={() => {}}
-        value={identifiedPlace.title}
-        valid={true}
+        onInput={inputHandler}
+        initialValue={formState.inputs.title.value}
+        initialValid={formState.inputs.title.isValid}
       />
       <Input
         id="description"
@@ -65,11 +72,11 @@ const UpdatePlace = () => {
         label="Description"
         validators={[VALIDATOR_MINLENGTH(5)]}
         errorText="Please enter a valid description (min. 5 characters)."
-        onInput={() => {}}
-        value={identifiedPlace.description}
-        valid={true}
+        onInput={inputHandler}
+        initialValue={formState.inputs.description.value}
+        initialValid={formState.inputs.description.isValid}
       />
-      <Button type="submit" disabled={true}>
+      <Button type="submit" disabled={!formState.isValid}>
         UPDATE PLACE
       </Button>
     </form>
