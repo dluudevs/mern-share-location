@@ -25,6 +25,11 @@ const formReducer = (state, action) => {
         },
         isValid: formIsValid 
       }
+    case 'SET_DATA':
+      return {
+        inputs: action.inputs,
+        isValid: action.isValid,
+      }
     default: 
       return state
   }
@@ -51,5 +56,14 @@ export const useForm = (initialInputs, initialFormValidity) => {
     });
   }, []);
 
-  return [ formState, inputHandler]
+  // used for async tasks ie., when api call is completed call this function. As React does not allow you to call hook inside of another block (ie., calling useForm hook inside of .then() or another function)
+  const setFormData = useCallback((inputData, formValidity) => {
+    dispatch({
+      type: 'SET_DATA',
+      inputs: inputData,
+      isValid: formValidity,
+    })
+  }, [])
+
+  return [ formState, inputHandler, setFormData]
 }

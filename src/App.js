@@ -11,6 +11,7 @@ import NewPlace from './places/pages/NewPlace';
 import UserPlaces from './places/pages/UserPlaces';
 import UpdatePlace from './places/pages/UpdatePlace';
 import MainNavigation from './shared/components/Navigation/MainNavigation';
+import Authenticate from './user/pages/Auth'
 
 // by default router parses routes from top to bottom
 // switch component will only render matched route (exclusively)
@@ -38,6 +39,9 @@ function App() {
           </Route>
           <Route path="/places/:placeId" exact>
             <UpdatePlace />
+          </Route>
+          <Route path="/auth" exact>
+            <Authenticate />
           </Route>
           <Redirect to="/" />
         </Switch>
