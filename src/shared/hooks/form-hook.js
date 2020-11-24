@@ -6,6 +6,11 @@ const formReducer = (state, action) => {
       let formIsValid = true;
       // for the below logic to work, it must be used in a loop and formIsValid must be used with double ampersand especially in the else statement
       for (const inputId in state.inputs){
+        // if input has a falsey value (eg., name: undefined when toggle form mode)
+        if(!state.inputs[inputId]){
+          // continues loop without running the code below it
+          continue;
+        }
         if (inputId === action.inputId){
           // first value of the loop wont always be the same as inputId, if a stored inputId's isValid is false then formIsValid becomes false
           // update formIsValid based on input's isValid value
@@ -56,7 +61,8 @@ export const useForm = (initialInputs, initialFormValidity) => {
     });
   }, []);
 
-  // used for async tasks ie., when api call is completed call this function. As React does not allow you to call hook inside of another block (ie., calling useForm hook inside of .then() or another function)
+  // used to explicitly set state of hook
+  // ie., when api call is completed call this function. As React does not allow you to call hook inside of another block (ie., calling useForm hook inside of .then() or another function)
   const setFormData = useCallback((inputData, formValidity) => {
     dispatch({
       type: 'SET_DATA',
