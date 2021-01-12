@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-// express can now use this object as a middleware
+// express can now use this object as a middleware (exports are objects)
 const placesRoutes = require("./routes/places-routes");
 
 const app = express();
