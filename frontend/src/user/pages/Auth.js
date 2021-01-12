@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 
 import Card from "../../shared/components/UIElements/Card";
 import Input from "../../shared/components/FormElements/Input";
@@ -11,6 +11,7 @@ import {
   VALIDATOR_REQUIRE,
 } from "../../shared/util/validators";
 import { useForm } from "../../shared/hooks/form-hook.js";
+import { AuthContext } from "../../shared/context/auth-context"
 
 const Authenticate = () => {
   const [formState, inputHandler, setFormData] = useForm(
@@ -23,8 +24,11 @@ const Authenticate = () => {
 
   const [isLoginMode, setIsLoginMode] = useState(true);
 
+  const auth = useContext(AuthContext);
+
   const handleLogin = (e) => {
     e.preventDefault();
+    auth.login()
     console.log(formState.inputs);
   };
 
@@ -34,12 +38,15 @@ const Authenticate = () => {
     if (!isLoginMode) {
       // form is set to valid if email and password are valid. without this the form will never be valid in login mode because name needs to be valid for the form to be valid
       setFormData(
-        { ...formState.inputs,  name: undefined },
+        { ...formState.inputs, name: undefined },
         formState.inputs.email.isValid && formState.inputs.password.isValid
       );
     } else {
       // form is false because by switching to sign up mode, the name input is introduced
-      setFormData({ ...formState.inputs, name: { value: "", isValid: false }}, false);
+      setFormData(
+        { ...formState.inputs, name: { value: "", isValid: false } },
+        false
+      );
     }
     // pass in function to setter if you want to access previous state value
     setIsLoginMode((prevMode) => !prevMode);

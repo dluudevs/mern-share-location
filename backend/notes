@@ -1,0 +1,40 @@
+Express uses a middleware-based approach that allow us to funnel request and responses through multiple steps - this is what makes it powerful
+We use express.use to create our own middleware for the request to be passed through, we can also find libraries to pass to app.use when registering middleware
+app.use will run every request through this middleware function
+With middleware functions, they will always have a next argument which passes the request to a subsequent middleware. However if next is not called
+or if a response is sent, the response is no longer passed to subsequent middleware
+
+All middleware functions require a callback function to be called upon. They all accept a request before invoking the callback function that is passed to it
+
+For example:
+
+const express = require('express')
+const app = express()
+
+app.use('/' (req, res, next) => {
+  // subsequent middlewares will have access to the body property on request
+  req.body = { name: 'delvv' }
+  next()
+})
+
+---
+
+Though this doesn't look like it bodyParser's method actually returns a function
+
+const express = require('express')
+const app = express()
+const bodyParser = require('body-parser')
+
+app.use(bodyParser.urlencoded({ extended: false }))
+
+----
+
+It is important to note that the second argument here is a callback function. Express runs this callback function only when the request meets the method used
+The callback function only gets called when a post request is made to '/user'
+app.post('/user', (req, res, next) => {
+  res.send('<h1>User: ' + req.username '</h1>')
+})
+
+
+Note that providing a path to app.use is optional. Once path is provided tho, it will match anything that starts with the passed value (eg., anything with / will run throgh this middleware)
+In app.get and app.post paths are mandatory
