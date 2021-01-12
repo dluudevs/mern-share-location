@@ -6,6 +6,11 @@ const placesRoutes = require("./routes/places-routes");
 
 const app = express();
 
+// middleware parsed from top to bottom
+
+// before passing to routes, parse any incoming requests body and extract json data
+app.use(bodyParser.json())
+
 // register as middleware by default all requests will go through this middleware (check for route matches)
 // by passing the path as an argument, express will only forward requests to placesRoutes middleware IF the path starts with the string in the path argument
 // eg., /api/places/... - this does NOT have to be repeated in placesRoutes. Only add the path after the path argument

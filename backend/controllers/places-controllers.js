@@ -1,6 +1,7 @@
 // Controllers - hold logic (middleware function) that should execute when a certain route is met
 // Brings together the request with the model and logic that should run with request
 
+const { v4: uuidv4 } = require("uuid");
 const HttpError = require("../models/http-error");
 
 const DUMMY_PLACES = [
@@ -44,7 +45,26 @@ const getPlaceByUserId = (req, res, next) => {
   res.json({ place });
 };
 
+const createPlace = (req, res, next) => {
+  // requires bodyparser middleware (setup in app.js)
+  const { title, description, coordinates, address, creator } = req.body;
+  const createdPlace = {
+    id: uuidv4(),
+    title,
+    description,
+    location: coordinates,
+    address,
+    creator
+  }
+
+  DUMMY_PLACES.push(createdPlace)
+
+  // 201 is standard for successful post request
+  res.status(201).json({ place: createdPlace })
+}
+
 // multiple exports syntax - exports get bundled into an object
 // single item export is module.exports
 exports.getPlaceById = getPlaceById;
-exports.getPlaceByUserId = getPlaceByUserId
+exports.getPlaceByUserId = getPlaceByUserId;
+exports.createPlace = createPlace;
