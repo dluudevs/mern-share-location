@@ -4,7 +4,7 @@
 const { v4: uuidv4 } = require("uuid");
 const HttpError = require("../models/http-error");
 
-const DUMMY_PLACES = [
+let DUMMY_PLACES = [
   {
     id: "p1",
     title: "Empire State Building",
@@ -63,8 +63,30 @@ const createPlace = (req, res, next) => {
   res.status(201).json({ place: createdPlace })
 }
 
+const updatePlace = (req, res, next) => {
+  const placeId = req.params.placeId
+
+  const place = DUMMY_PLACES.find(p => p.id === placeId);
+  const { title, description } = req.body
+  const updatedPlace = { ...place, title, description };
+
+  const index = DUMMY_PLACES.findIndex(p => p.id === placeId);
+
+  DUMMY_PLACES[index] = updatedPlace;
+
+  res.status(200).json({ place: updatedPlace });
+}
+
+const deletePlace = (req, res, next) => {
+  DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== req.params.placeId)
+  
+  res.status(200).json({ message: 'Deleted Place' })
+}
+
 // multiple exports syntax - exports get bundled into an object
 // single item export is module.exports
 exports.getPlaceById = getPlaceById;
 exports.getPlaceByUserId = getPlaceByUserId;
 exports.createPlace = createPlace;
+exports.updatePlace = updatePlace;
+exports.deletePlace = deletePlace;

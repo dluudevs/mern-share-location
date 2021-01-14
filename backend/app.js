@@ -10,6 +10,7 @@ const app = express();
 // middleware parsed from top to bottom
 
 // before passing to routes, parse any incoming requests body and extract json data
+// data available in req.body
 app.use(bodyParser.json())
 
 // register as middleware by default all requests will go through this middleware (check for route matches)
@@ -25,14 +26,13 @@ app.use((req, res, next) => {
   throw error;
 })
 
-// just like the above middleware function, this only runs when a response is not sent back 
-// all requests will be passed through this middleware (because it is a error handling middleware)
+// just like the above middleware function, this only runs when a response is not sent back or error occurs in route handling middleware
+// all requests will be passed through this middleware (because it is a error handling middleware that sits after route handling middleware)
 // by passing 4 arguments to the callback, express will recognize this as a error handling middleware function
 app.use((error, req, res, next) => {
   // checks if headers (response) have been sent
   if (res.headerSent) {
-    // forward the error
-    console.log(error)
+    // forward the error that arises from any of the route middleware
     return next(error);
   }
   res

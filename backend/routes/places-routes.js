@@ -1,7 +1,7 @@
 const express = require("express");
 
 // object returned from multiple exports
-const placesControllers = require('../controllers/places-controllers')
+const placesControllers = require("../controllers/places-controllers");
 
 // returns an object
 const router = express.Router();
@@ -13,5 +13,10 @@ router.get("/:placeId", placesControllers.getPlaceById);
 
 router.get("/user/:uid", placesControllers.getPlaceByUserId);
 
-router.post("/", placesControllers.createPlace)
+router.post("/", placesControllers.createPlace);
+
+router.patch("/:placeId", placesControllers.updatePlace);
+
+router.delete("/:placeId", placesControllers.deletePlace);
+
 module.exports = router;
