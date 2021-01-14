@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 
 // express can now use this object as a middleware (exports are objects)
 const placesRoutes = require("./routes/places-routes");
+const HttpError = require("./models/http-error")
 
 const app = express();
 
@@ -16,12 +17,22 @@ app.use(bodyParser.json())
 // eg., /api/places/... - this does NOT have to be repeated in placesRoutes. Only add the path after the path argument
 app.use("/api/places", placesRoutes);
 
-// all requests will be passed through this middleware
+// this middleware function will only run if no request is sent back. otherwise the placesRoutes middleware will handle all requests
+// when a response is sent back, the request is no longer passed to any later middleware. 
+// no response is sent back when an incorrect route is used
+app.use((req, res, next) => {
+  const error = new HttpError('Could not find this route.', 404);
+  throw error;
+})
+
+// just like the above middleware function, this only runs when a response is not sent back 
+// all requests will be passed through this middleware (because it is a error handling middleware)
 // by passing 4 arguments to the callback, express will recognize this as a error handling middleware function
 app.use((error, req, res, next) => {
   // checks if headers (response) have been sent
   if (res.headerSent) {
     // forward the error
+    console.log(error)
     return next(error);
   }
   res
