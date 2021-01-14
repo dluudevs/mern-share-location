@@ -11,7 +11,7 @@ const router = express.Router();
 // theres no problem here because our middleware handles the error and users will always be user/:uid
 router.get("/:placeId", placesControllers.getPlaceById);
 
-router.get("/user/:uid", placesControllers.getPlaceByUserId);
+router.get("/user/:uid", placesControllers.getPlacesByUserId);
 
 router.post("/", placesControllers.createPlace);
 
