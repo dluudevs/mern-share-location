@@ -3,7 +3,8 @@ const bodyParser = require("body-parser");
 
 // express can now use this object as a middleware (exports are objects)
 const placesRoutes = require("./routes/places-routes");
-const HttpError = require("./models/http-error")
+const userRoutes = require("./routes/user-routes");
+const HttpError = require("./models/http-error");
 
 const app = express();
 
@@ -17,6 +18,8 @@ app.use(bodyParser.json())
 // by passing the path as an argument, express will only forward requests to placesRoutes middleware IF the path starts with the string in the path argument
 // eg., /api/places/... - this does NOT have to be repeated in placesRoutes. Only add the path after the path argument
 app.use("/api/places", placesRoutes);
+
+app.use("/api/users", userRoutes);
 
 // this middleware function will only run if no request is sent back. otherwise the placesRoutes middleware will handle all requests
 // when a response is sent back, the request is no longer passed to any later middleware. 
