@@ -26,7 +26,11 @@ router.post(
   placesControllers.createPlace
 );
 
-router.patch("/:placeId", placesControllers.updatePlace);
+router.patch(
+  "/:placeId",
+  [check("title").not().isEmpty(), check("description").isLength({ min: 5 })],
+  placesControllers.updatePlace
+);
 
 router.delete("/:placeId", placesControllers.deletePlace);
 
