@@ -1,7 +1,8 @@
 // Controllers - hold logic (middleware function) that should execute when a certain route is met
 // Brings together the request with the model and logic that should run with request
-
 const { v4: uuidv4 } = require("uuid");
+
+const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 
 let DUMMY_PLACES = [
@@ -47,6 +48,12 @@ const getPlacesByUserId = (req, res, next) => {
 };
 
 const createPlace = (req, res, next) => {
+  // check for any validation errors in req object - this only works because this function is called in a route that is using express validator .post('/')
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError('Invalid Inputs, please check your data.', 422);
+  }
+  
   // requires bodyparser middleware (setup in app.js)
   const { title, description, coordinates, address, creator } = req.body;
   const createdPlace = {
@@ -55,34 +62,34 @@ const createPlace = (req, res, next) => {
     description,
     location: coordinates,
     address,
-    creator
-  }
+    creator,
+  };
 
-  DUMMY_PLACES.push(createdPlace)
+  DUMMY_PLACES.push(createdPlace);
 
   // 201 is standard for successful post request
-  res.status(201).json({ place: createdPlace })
-}
+  res.status(201).json({ place: createdPlace });
+};
 
 const updatePlace = (req, res, next) => {
-  const placeId = req.params.placeId
+  const placeId = req.params.placeId;
 
-  const place = DUMMY_PLACES.find(p => p.id === placeId);
-  const { title, description } = req.body
+  const place = DUMMY_PLACES.find((p) => p.id === placeId);
+  const { title, description } = req.body;
   const updatedPlace = { ...place, title, description };
 
-  const index = DUMMY_PLACES.findIndex(p => p.id === placeId);
+  const index = DUMMY_PLACES.findIndex((p) => p.id === placeId);
 
   DUMMY_PLACES[index] = updatedPlace;
 
   res.status(200).json({ place: updatedPlace });
-}
+};
 
 const deletePlace = (req, res, next) => {
-  DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== req.params.placeId)
-  
-  res.status(200).json({ message: 'Deleted Place' })
-}
+  DUMMY_PLACES = DUMMY_PLACES.filter((p) => p.id !== req.params.placeId);
+
+  res.status(200).json({ message: "Deleted Place" });
+};
 
 // multiple exports syntax - exports get bundled into an object
 // single item export is module.exports

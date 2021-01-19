@@ -1,4 +1,5 @@
 const express = require("express");
+const { check } = require("express-validator");
 
 // object returned from multiple exports
 const placesControllers = require("../controllers/places-controllers");
@@ -13,7 +14,17 @@ router.get("/:placeId", placesControllers.getPlaceById);
 
 router.get("/user/:uid", placesControllers.getPlacesByUserId);
 
-router.post("/", placesControllers.createPlace);
+// can pass more than one middleware to route, they will run in order from left to right
+// check for validity before passing it to controller middleware - check returns a middleware function, that is why it is being called here
+router.post(
+  "/",
+  [
+    check("title").not().isEmpty(),
+    check("description").isLength({ min: 5 }),
+    check("address").not().isEmpty(),
+  ],
+  placesControllers.createPlace
+);
 
 router.patch("/:placeId", placesControllers.updatePlace);
 
