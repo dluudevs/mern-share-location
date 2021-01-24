@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
+const geocode = require("../util/location");
 
 let DUMMY_PLACES = [
   {
@@ -47,15 +48,32 @@ const getPlacesByUserId = (req, res, next) => {
   res.json({ places });
 };
 
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
   // check for any validation errors in req object - this only works because this function is called in a route that is using express validator .post('/')
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError('Invalid Inputs, please check your data.', 422);
+    // throw will not work properly with async tasks, must use next instead
+    // next does not exit the function, throw exits function, return keyword is required with next to exit the function
+    return next(new HttpError("Invalid Inputs, please check your data.", 422));
   }
-  
+
   // requires bodyparser middleware (setup in app.js)
-  const { title, description, coordinates, address, creator } = req.body;
+  const { title, description, address, creator } = req.body;
+
+  let coordinates;
+  // geocode is an async function (always return promise) that returns a resolved promise or an error
+  // try catch block used to catch the error pass to the next middleware (this is the same concept as error handling with an if statement)
+  // in an if statement, a conditional is used to determine if there is an error. in try catch, we simply check if there is an error and pass it to the next middleware
+  // next must be used in an async function, it works similar to throwing an error 
+  // when there is an error, use return to exit the function
+  try {
+    coordinates = await geocode(address);
+  } catch(error) {
+    // return otherwise the function will continue executing
+    return next(error)
+  }
+
+
   const createdPlace = {
     id: uuidv4(),
     title,
@@ -73,16 +91,16 @@ const createPlace = (req, res, next) => {
 
 const updatePlace = (req, res, next) => {
   const placeId = req.params.placeId;
-  const errors = validationResult(req)
+  const errors = validationResult(req);
 
   const place = DUMMY_PLACES.find((p) => p.id === placeId);
 
-  if (!place){
-    throw new HttpError("Place ID not found", 404)
+  if (!place) {
+    throw new HttpError("Place ID not found", 404);
   }
-  
+
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs, please check your data", 422)
+    throw new HttpError("Invalid inputs, please check your data", 422);
   }
 
   const { title, description } = req.body;
@@ -97,9 +115,9 @@ const updatePlace = (req, res, next) => {
 
 const deletePlace = (req, res, next) => {
   const placeId = req.params.placeId;
-  
-  if (!DUMMY_PLACES.find(p => p.id === placeId)){
-    throw new HttpError("Could not find a place for that id", 404)
+
+  if (!DUMMY_PLACES.find((p) => p.id === placeId)) {
+    throw new HttpError("Could not find a place for that id", 404);
   }
 
   DUMMY_PLACES = DUMMY_PLACES.filter((p) => p.id !== placeId);
