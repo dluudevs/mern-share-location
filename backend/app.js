@@ -1,4 +1,9 @@
-const express = require("express");
+// Basic idea of express: all callbacks are middleware functions
+// the request is passed from middleware function to middleware function until a response is sent back in which case the response no longer gest passed to the succeeding middlware function 
+// if passing the request along to another middleware function, next MUST be called or the response will be left hanging
+const express = require('express');
+const mongoose = require('mongoose');
+
 const bodyParser = require("body-parser");
 
 // express can now use this object as a middleware (exports are objects)
@@ -43,4 +48,14 @@ app.use((error, req, res, next) => {
     .json({ message: error.message || "An unknown error has occured!" });
 });
 
-app.listen(5000);
+mongoose
+  .connect(
+    "mongodb+srv://delvv:369Dluuml@cluster0.1hdzc.mongodb.net/places?retryWrites=true&w=majority"
+  )
+  .then(() => {
+    app.listen(5000);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+

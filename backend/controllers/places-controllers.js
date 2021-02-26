@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const geocode = require("../util/location");
+const Place = require("../models/place");
 
 let DUMMY_PLACES = [
   {
@@ -20,22 +21,54 @@ let DUMMY_PLACES = [
   },
 ];
 
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   // params property holds object with dynamic routes as key value pairs eg., { placeId: 'p1' }
   const placeId = req.params.placeId;
-  const place = DUMMY_PLACES.find((p) => p.id === placeId);
+
+  // findById is a static method, not used on instance of place (like createPlace function). Instead it is used on the constructor function
+  // remember constructor functions are functions that create an instance of a class, therefore static methods are methods defined within that class
+  // findById does not return a promise, but you can still use async / await because of how mongoose works. To return a promise, chain the exec() method
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (e) {
+    // catches any errors with the request (eg., missing placeId)
+    const error = new HttpError(
+      "Something went wrong, could not find a place",
+      500
+    );
+    return next(error);
+  }
 
   // res.json is the same as res.send it will no longer pass the request to any subsequent middleware
+  // if statement runs when no place is found
   if (!place) {
     // throwing an error will only work with synchronous actions - throw will also exit the function
-    throw new HttpError("Could not find a place for the provided id", 404);
+    // use next to pass the error to the succeeding middleware
+    const error = new HttpError(
+      "Could not find a place for the provided id",
+      404
+    );
+    return next(error);
   }
-  res.json({ place });
+  
+  // toObject is a mongoose method that converts the mongoose document to a javascript object
+  res.json({ place: place.toObject( { getters: true } ) }); // getter and setters allow you to execute custom logic when getting or setting a property on a Mongoose document
+  // getters: true works here because by default mongoose assigns an id virutual getter which returns an "id" property with a value from the documents _id field - https://mongoosejs.com/docs/guide.html#id
+  // virtual getters are getters return values that arent stored in MongoDB, but the values can be used locally
+  // in this case we're sending the "id" property but we won't be able to query for "id" in MongoDB
 };
 
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
-  const places = DUMMY_PLACES.filter((p) => p.creator === userId);
+
+  let places;
+  try {
+    places = await Place.find({ creator: userId }) // by default Mongoose returns an array, but MongoDB would return a cursor. A cursor points to the results and allows for iteration but it is not an array
+  } catch (e) {
+    const error = new HttpError("Something went wrong", 500)
+    return next(error);
+  }
 
   // empty array is returned from filter is nothing is found
   if (!places.length) {
@@ -45,6 +78,8 @@ const getPlacesByUserId = (req, res, next) => {
     );
   }
 
+  // convert results to workable javascript method
+  places = places.map( place => place.toObject({ getters: true }) )
   res.json({ places });
 };
 
@@ -64,26 +99,33 @@ const createPlace = async (req, res, next) => {
   // geocode is an async function (always return promise) that returns a resolved promise or an error
   // try catch block used to catch the error pass to the next middleware (this is the same concept as error handling with an if statement)
   // in an if statement, a conditional is used to determine if there is an error. in try catch, we simply check if there is an error and pass it to the next middleware
-  // next must be used in an async function, it works similar to throwing an error 
+  // next must be used in an async function, it works similar to throwing an error
   // when there is an error, use return to exit the function
   try {
     coordinates = await geocode(address);
-  } catch(error) {
+  } catch (error) {
     // return otherwise the function will continue executing
-    return next(error)
+    return next(error);
   }
 
-
-  const createdPlace = {
-    id: uuidv4(),
+  const createdPlace = new Place({
     title,
     description,
-    location: coordinates,
     address,
     creator,
-  };
+    location: coordinates,
+    image:
+      "https://images.pexels.com/photos/36445/rose-close-up-pink-flower.jpg?cs=srgb&dl=pexels-pixabay-36445.jpg&fm=jpg",
+  });
 
-  DUMMY_PLACES.push(createdPlace);
+  try {
+    await createdPlace.save();
+  } catch (e) {
+    console.log(e);
+    const error = new HttpError("Creating place failed, please try again", 500);
+    // must use next as we have async tasks and to pass error to next middleware that handles errors (defined in app)
+    return next(error);
+  }
 
   // 201 is standard for successful post request
   res.status(201).json({ place: createdPlace });
