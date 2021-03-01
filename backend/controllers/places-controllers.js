@@ -51,9 +51,9 @@ const getPlaceById = async (req, res, next) => {
     );
     return next(error);
   }
-  
+
   // toObject is a mongoose method that converts the mongoose document to a javascript object
-  res.json({ place: place.toObject( { getters: true } ) }); // getter and setters allow you to execute custom logic when getting or setting a property on a Mongoose document
+  res.json({ place: place.toObject({ getters: true }) }); // getter and setters allow you to execute custom logic when getting or setting a property on a Mongoose document
   // getters: true works here because by default mongoose assigns an id virutual getter which returns an "id" property with a value from the documents _id field - https://mongoosejs.com/docs/guide.html#id
   // virtual getters are getters return values that arent stored in MongoDB, but the values can be used locally
   // in this case we're sending the "id" property but we won't be able to query for "id" in MongoDB
@@ -64,9 +64,9 @@ const getPlacesByUserId = async (req, res, next) => {
 
   let places;
   try {
-    places = await Place.find({ creator: userId }) // by default Mongoose returns an array, but MongoDB would return a cursor. A cursor points to the results and allows for iteration but it is not an array
+    places = await Place.find({ creator: userId }); // by default Mongoose returns an array, but MongoDB would return a cursor. A cursor points to the results and allows for iteration but it is not an array
   } catch (e) {
-    const error = new HttpError("Something went wrong", 500)
+    const error = new HttpError("Something went wrong", 500);
     return next(error);
   }
 
@@ -79,7 +79,7 @@ const getPlacesByUserId = async (req, res, next) => {
   }
 
   // convert results to workable javascript method
-  places = places.map( place => place.toObject({ getters: true }) )
+  places = places.map((place) => place.toObject({ getters: true }));
   res.json({ places });
 };
 
@@ -131,11 +131,21 @@ const createPlace = async (req, res, next) => {
   res.status(201).json({ place: createdPlace });
 };
 
-const updatePlace = (req, res, next) => {
+const updatePlace = async (req, res, next) => {
   const placeId = req.params.placeId;
   const errors = validationResult(req);
 
-  const place = DUMMY_PLACES.find((p) => p.id === placeId);
+  let place;
+
+  try {
+    place = await Place.findById(placeId);
+  } catch (e) {
+    const error = new HttpError(
+      "Something went wrong, could not find place",
+      500
+    );
+    return next(error);
+  }
 
   if (!place) {
     throw new HttpError("Place ID not found", 404);
@@ -146,23 +156,35 @@ const updatePlace = (req, res, next) => {
   }
 
   const { title, description } = req.body;
-  const updatedPlace = { ...place, title, description };
+  place.title = title;
+  place.description = description;
 
-  const index = DUMMY_PLACES.findIndex((p) => p.id === placeId);
-
-  DUMMY_PLACES[index] = updatedPlace;
-
-  res.status(200).json({ place: updatedPlace });
-};
-
-const deletePlace = (req, res, next) => {
-  const placeId = req.params.placeId;
-
-  if (!DUMMY_PLACES.find((p) => p.id === placeId)) {
-    throw new HttpError("Could not find a place for that id", 404);
+  try {
+    await place.save();
+  } catch (e) {
+    const error = new HttpError(
+      "Something went wrong, could not update place",
+      500
+    );
+    return next(error);
   }
 
-  DUMMY_PLACES = DUMMY_PLACES.filter((p) => p.id !== placeId);
+  res.status(200).json({ place: place.toObject({ getters: true }) });
+};
+
+const deletePlace = async (req, res, next) => {
+  const placeId = req.params.placeId;
+
+  try {
+    await Place.findById(placeId).remove();
+  } catch (e) {
+    const error = new HttpError(
+      "Something went wrong, could not delete place",
+      500
+    );
+    return next(error);
+  }
+
   res.status(200).json({ message: "Deleted Place" });
 };
 
