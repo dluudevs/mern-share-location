@@ -3,53 +3,91 @@ const { validationResult } = require("express-validator");
 
 const HttpError = require("../models/http-error");
 
-const DUMMY_USERS = [
-  {
-    id: "u1",
-    username: "delvv",
-    password: "temp123",
-    email: "delvv@gmail.com",
-  },
-];
+const User = require("../models/user");
 
-const getAllUsers = (req, res, next) => {
+const getAllUsers = async (req, res, next) => {
+  let users;
+  try {
+    // second argument is called a projection. query will only return these properties
+    // here we are excluding the password property
+    users = await User.find({}, '-password');
+  } catch (e) {
+    return next(new HttpError('Could not fetch users', 500));
+  }
+
+  users = users.map( user => user.toObject({ getters: true }));
   // By default status code 200 is sent back on successful requests
-  res.json({ users: DUMMY_USERS });
+  res.status(200).json({ users })
 };
 
-const signUpUser = (req, res, next) => {
-  const { username, password, email } = req.body;
-  const userExists = DUMMY_USERS.find((user) => user.email === email);
-
+const signUpUser = async (req, res, next) => {
   const errors = validationResult(req);
 
-  if (userExists) {
-    throw new HttpError("This email address already has an account", 400);
-  }
-
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs, please check your data", 422);
+    console.log(errors);
+    return next(new HttpError("Invalid inputs, please check your data", 422));
   }
 
-  const newUser = { id: uuidv4(), username, password, email };
+  const { username, password, email } = req.body;
 
-  DUMMY_USERS.push(newUser);
-  res.status(201).json({ user: newUser });
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (e) {
+    const error = new HttpError("Unable to connect with database", 500);
+    return next(error);
+  }
+
+  if (existingUser) {
+    const error = new HttpError(
+      "This email address already has an account",
+      422
+    );
+    return next(error);
+  }
+
+  const newUser = new User({
+    username,
+    email,
+    image:
+      "https://images.pexels.com/photos/5861322/pexels-photo-5861322.jpeg?cs=srgb&dl=pexels-athena-5861322.jpg&fm=jpg",
+    password,
+    places: []
+  });
+
+  try {
+    await newUser.save();
+  } catch (e) {
+    const error = new HttpError("Creating user failed, please try again", 500);
+    // must use next as we have async tasks and to pass error to next middleware that handles errors (defined in app)
+    return next(error);
+  }
+
+  res.status(201).json({ user: newUser.toObject({ getters: true }) });
 };
 
-const loginUser = (req, res, next) => {
+const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
-  const user = DUMMY_USERS.find((user) => user.email === email);
+  
+  let user;
+  try {
+    user = await User.findOne({ email });
+  } catch (e) {
+    return new HttpError(
+      "Could not connect to server, please try again later",
+      500
+    );
+  }
 
   if (!user) {
-    throw new HttpError("Email not found", 404);
+    return next(new HttpError("Email not found", 404));
   }
 
-  if (password === user.password) {
-    return res.json({ message: "Login Successful!" });
-  } else {
-    throw new HttpError("Password is incorrect", 401);
+  if (password !== user.password) {
+    return next(new HttpError("Password is incorrect", 401));
   }
+
+  return res.json({ message: "Login Successful!" });
 };
 
 exports.getAllUsers = getAllUsers;

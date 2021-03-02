@@ -1,25 +1,12 @@
 // Controllers - hold logic (middleware function) that should execute when a certain route is met
 // Brings together the request with the model and logic that should run with request
-const { v4: uuidv4 } = require("uuid");
 
 const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const geocode = require("../util/location");
 const Place = require("../models/place");
+const User = require("../models/user");
 
-let DUMMY_PLACES = [
-  {
-    id: "p1",
-    title: "Empire State Building",
-    description: "One of the most famous skyscrapers in the world",
-    location: {
-      lat: 40.7484474,
-      lng: -73.9871516,
-    },
-    address: "20 W 34th St, New York, NY 10001",
-    creator: "u1",
-  },
-];
 
 const getPlaceById = async (req, res, next) => {
   // params property holds object with dynamic routes as key value pairs eg., { placeId: 'p1' }
@@ -121,7 +108,6 @@ const createPlace = async (req, res, next) => {
   try {
     await createdPlace.save();
   } catch (e) {
-    console.log(e);
     const error = new HttpError("Creating place failed, please try again", 500);
     // must use next as we have async tasks and to pass error to next middleware that handles errors (defined in app)
     return next(error);
@@ -148,11 +134,11 @@ const updatePlace = async (req, res, next) => {
   }
 
   if (!place) {
-    throw new HttpError("Place ID not found", 404);
+    return next(new HttpError("Place ID not found", 404));
   }
 
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs, please check your data", 422);
+    return next(new HttpError("Invalid inputs, please check your data", 422));
   }
 
   const { title, description } = req.body;
