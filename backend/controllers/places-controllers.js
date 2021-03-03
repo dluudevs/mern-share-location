@@ -2,11 +2,12 @@
 // Brings together the request with the model and logic that should run with request
 
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
+
 const HttpError = require("../models/http-error");
 const geocode = require("../util/location");
 const Place = require("../models/place");
 const User = require("../models/user");
-
 
 const getPlaceById = async (req, res, next) => {
   // params property holds object with dynamic routes as key value pairs eg., { placeId: 'p1' }
@@ -105,11 +106,38 @@ const createPlace = async (req, res, next) => {
       "https://images.pexels.com/photos/36445/rose-close-up-pink-flower.jpg?cs=srgb&dl=pexels-pixabay-36445.jpg&fm=jpg",
   });
 
+  let user;
   try {
-    await createdPlace.save();
+    // check if user exists
+    user = await User.findById(creator);
   } catch (e) {
     const error = new HttpError("Creating place failed, please try again", 500);
     // must use next as we have async tasks and to pass error to next middleware that handles errors (defined in app)
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError("Could not find user for provided id", 404);
+    return next(error);
+  }
+
+  // Below try block saves place and saves the place to the related user
+  // If user id cannot be found or storing place in user fails independently from each other, undo all operations and throw error (otherwise your db will contain pieces of data that dont mean anything)
+  // done through the use of sessions and transactions
+  // with transaction if one of the operations fails an error is thrown and the transaction does not commit
+  // when using transactions, the model will not create a collection for you. this must be done manually through the backend (MongoDB website)
+  try {
+    // session must be started before we can start working with transactions
+    const sess = await mongoose.startSession();
+    // transactions allow us to perform multiple operations in isolation of one another
+    sess.startTransaction();
+    await createdPlace.save({ session: sess }); // pass in object and refer to current session-
+    // push method used on user (query) to establish relationship between places and user models with the created place id (add place id to user document) - this is done locally there is no interaction with the database
+    user.places.push(createdPlace);
+    await user.save({ session: sess });
+    await sess.commitTransaction(); // save changes
+  } catch (e) {
+    const error = new HttpError("Creating place failed, please try again", 500);
     return next(error);
   }
 
@@ -161,13 +189,44 @@ const updatePlace = async (req, res, next) => {
 const deletePlace = async (req, res, next) => {
   const placeId = req.params.placeId;
 
+  // find user with place = placeid
+  // remove the placeid from user.place
+  // delete place
+
+  let place;
   try {
-    await Place.findById(placeId).remove();
+    // populate refers to another document stored in another collection and allows us to work with data in that existing document
+    // for populate to work, a relationship must be defined in Place and User schema with ref property or populate wont work
+    // argument passed is the property to populate. inside of Place schema, creator references the user schema
+    place = await Place.findById(placeId).populate("creator"); // find place with placeid and populates creator property with user document using id from place.creator
+  } catch (e) {
+    const error = new HttpError(
+      "Something went wrong, could not establish connection to database",
+      500
+    );
+    return next(error);
+  }
+
+  if (!place) {
+    const error = new HttpError("Could not find place for this id", 404);
+    return next(error);
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    // edits the array - does not interact with database
+    // this is possible because we used populate to retrieve the place document. any changes done to the creator property will directly change the related user document
+    place.creator.places.pull(placeId);
+    await place.creator.save({ session: sess });
+    await place.remove({ session: sess });
+    await sess.commitTransaction();
   } catch (e) {
     const error = new HttpError(
       "Something went wrong, could not delete place",
       500
     );
+    console.log(e)
     return next(error);
   }
 
