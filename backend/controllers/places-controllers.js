@@ -36,7 +36,7 @@ const getPlaceById = async (req, res, next) => {
     const error = new HttpError(
       "Could not find a place for the provided id",
       404
-    );
+    )
     return next(error);
   }
 
@@ -197,7 +197,7 @@ const deletePlace = async (req, res, next) => {
   try {
     // populate refers to another document stored in another collection and allows us to work with data in that existing document
     // for populate to work, a relationship must be defined in Place and User schema with ref property or populate wont work
-    // argument passed is the property to populate. inside of Place schema, creator references the user schema
+    // argument passed is the property in Place to populate. Creator references the user schema
     place = await Place.findById(placeId).populate("creator"); // find place with placeid and populates creator property with user document using id from place.creator
   } catch (e) {
     const error = new HttpError(
@@ -207,7 +207,7 @@ const deletePlace = async (req, res, next) => {
     return next(error);
   }
 
-  if (!place) {
+  if (!place || !places.length ) {
     const error = new HttpError("Could not find place for this id", 404);
     return next(error);
   }
