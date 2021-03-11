@@ -11,7 +11,7 @@ import {
   VALIDATOR_REQUIRE,
 } from "../../shared/util/validators";
 import { useForm } from "../../shared/hooks/form-hook.js";
-import { AuthContext } from "../../shared/context/auth-context"
+import { AuthContext } from "../../shared/context/auth-context";
 
 const Authenticate = () => {
   const [formState, inputHandler, setFormData] = useForm(
@@ -24,13 +24,10 @@ const Authenticate = () => {
 
   const [isLoginMode, setIsLoginMode] = useState(true);
 
+  // pass in context object to hook to object from this context's provider
+  // value retrieved is the value property passed to the context's provider
+  // changes to the provider's value will cause a re render wherever that context is used
   const auth = useContext(AuthContext);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    auth.login()
-    console.log(formState.inputs);
-  };
 
   // If there is more than one state setter in a synchronous code block, react will batch these state changes and make one state update / re-render cycle
   const switchModeHandler = () => {
@@ -50,6 +47,34 @@ const Authenticate = () => {
     }
     // pass in function to setter if you want to access previous state value
     setIsLoginMode((prevMode) => !prevMode);
+  };
+
+  const authSubmitHandler = async (event) => {
+    event.preventDefault();
+
+    if (isLoginMode){
+      // run signup authentication if app is NOT in login mode
+    } else {
+      try {
+        const response = await fetch("http://localhost:5000/api/users/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formState.inputs.name.value,
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+        })
+
+        const responseData = await response.json();
+        console.log(responseData)
+      } catch (e) {
+        console.log(e)
+      }
+    }
+    auth.login();
   };
 
   return (
@@ -92,7 +117,7 @@ const Authenticate = () => {
         <Button
           type="submit"
           disabled={!formState.isValid}
-          onClick={handleLogin}
+          onClick={authSubmitHandler}
         >
           {isLoginMode ? "LOGIN" : "SIGNUP"}
         </Button>
