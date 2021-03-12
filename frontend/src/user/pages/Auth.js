@@ -3,8 +3,8 @@ import React, { useState, useContext } from "react";
 import Card from "../../shared/components/UIElements/Card";
 import Input from "../../shared/components/FormElements/Input";
 import Button from "../../shared/components/FormElements/Button";
-import "./auth.css";
-
+import ErrorModal from '../../shared/components/UIElements/ErrorModal'
+import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner'
 import {
   VALIDATOR_EMAIL,
   VALIDATOR_MINLENGTH,
@@ -12,6 +12,7 @@ import {
 } from "../../shared/util/validators";
 import { useForm } from "../../shared/hooks/form-hook.js";
 import { AuthContext } from "../../shared/context/auth-context";
+import "./auth.css";
 
 const Authenticate = () => {
   const [formState, inputHandler, setFormData] = useForm(
@@ -23,6 +24,8 @@ const Authenticate = () => {
   );
 
   const [isLoginMode, setIsLoginMode] = useState(true);
+  const [ isLoading, setIsLoading ] = useState(false)
+  const [ error, setError ] = useState()
 
   // pass in context object to hook to object from this context's provider
   // value retrieved is the value property passed to the context's provider
@@ -56,6 +59,7 @@ const Authenticate = () => {
       // run signup authentication if app is NOT in login mode
     } else {
       try {
+        setIsLoading(true); // this will update state immediately and not get batched with other state updates because it is inside an async function (async functions wrap everything inside of a promise, everything is executed asychronusly)
         const response = await fetch("http://localhost:5000/api/users/signup", {
           method: "POST",
           headers: {
@@ -67,65 +71,78 @@ const Authenticate = () => {
             password: formState.inputs.password.value,
           }),
         })
-
         const responseData = await response.json();
+        setIsLoading(false); // restore state to neutral before login as login will change context the state change may occur for a component that isn't being rendered 
+        // 400 * 500 status code from response is not an error, but login is not successful. Response Ok is for all other status codes
+        if (!response.ok){
+          throw new Error (responseData.message); // triggers catch block
+        }
         console.log(responseData)
-      } catch (e) {
-        console.log(e)
+        auth.login(); 
+      } catch (error) {
+        setError(error.message || "Something went wrong, please try again")
+        setIsLoading(false);
       }
     }
-    auth.login();
   };
 
+  const ErrorHandler = () => {
+    setError(null);
+  }
+
   return (
-    <Card class="authentication">
-      <h2>Login Required</h2>
-      <hr />
-      <form>
-        {!isLoginMode && (
+    <>
+      <ErrorModal error={error} />
+      <Card class="authentication">
+        { isLoading && <LoadingSpinner asOverlay onClear={ErrorHandler}/> }
+        <h2>Login Required</h2>
+        <hr />
+        <form>
+          {!isLoginMode && (
+            <Input
+              element="input"
+              id="name"
+              label="Name"
+              type="text"
+              placeholder="Name"
+              errorText="Please enter a name"
+              validators={[VALIDATOR_REQUIRE()]}
+              onInput={inputHandler}
+            />
+          )}
           <Input
             element="input"
-            id="name"
-            label="Name"
+            id="email"
+            label="Email"
             type="text"
-            placeholder="Name"
-            errorText="Please enter a name"
-            validators={[VALIDATOR_REQUIRE()]}
+            placeholder="email"
+            errorText="Please enter a valid email"
+            validators={[VALIDATOR_EMAIL()]}
             onInput={inputHandler}
           />
-        )}
-        <Input
-          element="input"
-          id="email"
-          label="Email"
-          type="text"
-          placeholder="email"
-          errorText="Please enter a valid email"
-          validators={[VALIDATOR_EMAIL()]}
-          onInput={inputHandler}
-        />
-        <Input
-          element="input"
-          id="password"
-          label="Password"
-          type="password"
-          placeholder="password"
-          errorText="Your password needs to be at least 6 characters"
-          validators={[VALIDATOR_MINLENGTH(6)]}
-          onInput={inputHandler}
-        />
-        <Button
-          type="submit"
-          disabled={!formState.isValid}
-          onClick={authSubmitHandler}
-        >
-          {isLoginMode ? "LOGIN" : "SIGNUP"}
-        </Button>
-        <Button inverse type="button" onClick={switchModeHandler}>
-          {isLoginMode ? "SWITCH TO SIGN UP" : "SWITCH TO LOGIN"}
-        </Button>
-      </form>
-    </Card>
+          <Input
+            element="input"
+            id="password"
+            label="Password"
+            type="password"
+            placeholder="password"
+            errorText="Your password needs to be at least 6 characters"
+            validators={[VALIDATOR_MINLENGTH(6)]}
+            onInput={inputHandler}
+          />
+          <Button
+            type="submit"
+            disabled={!formState.isValid}
+            onClick={authSubmitHandler}
+          >
+            {isLoginMode ? "LOGIN" : "SIGNUP"}
+          </Button>
+          <Button inverse type="button" onClick={switchModeHandler}>
+            {isLoginMode ? "SWITCH TO SIGN UP" : "SWITCH TO LOGIN"}
+          </Button>
+        </form>
+      </Card>
+    </>
   );
 };
 

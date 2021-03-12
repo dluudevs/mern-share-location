@@ -27,7 +27,6 @@ export const validate = (value, validators) => {
       isValid = isValid && value.trim().length > 0;
     }
     if (validator.type === VALIDATOR_TYPE_MINLENGTH) {
-      console.log('validating min length')
       isValid = isValid && value.trim().length >= validator.val;
     }
     if (validator.type === VALIDATOR_TYPE_MAXLENGTH) {
@@ -40,7 +39,6 @@ export const validate = (value, validators) => {
       isValid = isValid && +value <= validator.val;
     }
     if (validator.type === VALIDATOR_TYPE_EMAIL) {
-      console.log('validating email')
       isValid = isValid && /^\S+@\S+\.\S+$/.test(value);
     }
   }
