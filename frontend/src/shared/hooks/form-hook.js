@@ -12,13 +12,14 @@ const formReducer = (state, action) => {
           continue;
         }
         if (inputId === action.inputId){
-          // first value of the loop wont always be the same as inputId, if a stored inputId's isValid is false then formIsValid becomes false
-          // update formIsValid based on input's isValid value
+          // checks isValid of input that just changed
+          // if the action's inputId matches the current inputId in the loop check if the action isValid. Form is only valid if formIsValid and action isValid
+          // formIsValid's value can change until the loop is completed
           formIsValid = formIsValid && action.isValid
         } else {
-          // use inputId's stored isValid in state to set value of formIsValid
-          // because there will always be a value in state.inputs that will not strictly equal actions.inputId, this else statement will always run
-          // since this condition runs with the loop, all inputIds will be checked. formIsValid is only true if all isValid values are true
+          // checks isValid of input in state
+          // if the action's inputID does not match the current inputId in the loop, refer to the state to retrieve value of isValid - every input's isValid is set inside of state on inputChange
+          // all it takes is one input to be invalid for the form to be invalid, once formIsValid is set to false there is no code to set it to true again
           formIsValid = formIsValid && state.inputs[inputId].isValid
         }
       }
