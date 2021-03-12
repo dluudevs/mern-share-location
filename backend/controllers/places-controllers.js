@@ -189,10 +189,6 @@ const updatePlace = async (req, res, next) => {
 const deletePlace = async (req, res, next) => {
   const placeId = req.params.placeId;
 
-  // find user with place = placeid
-  // remove the placeid from user.place
-  // delete place
-
   let place;
   try {
     // populate refers to another document stored in another collection and allows us to work with data in that existing document
