@@ -57,6 +57,29 @@ const Authenticate = () => {
 
     if (isLoginMode){
       // run signup authentication if app is NOT in login mode
+      try {
+        setIsLoading(true); // this will update state immediately and not get batched with other state updates because it is inside an async function (async functions wrap everything inside of a promise, everything is executed asychronusly)
+        const response = await fetch("http://localhost:5000/api/users/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+        });
+        const responseData = await response.json();
+        setIsLoading(false); // restore state to neutral before login as login will change context the state change may occur for a component that isn't being rendered
+        // 400 * 500 status code from response is not an error, but login is not successful. Response Ok is for all other status codes
+        if (!response.ok) {
+          throw new Error(responseData.message); // triggers catch block
+        }
+        auth.login();
+      } catch (error) {
+        setError(error.message || "Something went wrong, please try again");
+        setIsLoading(false);
+      }
     } else {
       try {
         setIsLoading(true); // this will update state immediately and not get batched with other state updates because it is inside an async function (async functions wrap everything inside of a promise, everything is executed asychronusly)
@@ -77,7 +100,6 @@ const Authenticate = () => {
         if (!response.ok){
           throw new Error (responseData.message); // triggers catch block
         }
-        console.log(responseData)
         auth.login(); 
       } catch (error) {
         setError(error.message || "Something went wrong, please try again")
@@ -92,9 +114,9 @@ const Authenticate = () => {
 
   return (
     <>
-      <ErrorModal error={error} />
+      <ErrorModal error={error} onClear={ErrorHandler}/>
       <Card class="authentication">
-        { isLoading && <LoadingSpinner asOverlay onClear={ErrorHandler}/> }
+        {isLoading && <LoadingSpinner asOverlay />}
         <h2>Login Required</h2>
         <hr />
         <form>
