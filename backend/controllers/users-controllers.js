@@ -21,14 +21,15 @@ const getAllUsers = async (req, res, next) => {
 };
 
 const signUpUser = async (req, res, next) => {
+  console.log(req)
   const errors = validationResult(req);
-
+  console.log(errors)
   if (!errors.isEmpty()) {
     console.log(errors);
     return next(new HttpError("Invalid inputs, please check your data", 422));
   }
 
-  const { username, password, email } = req.body;
+  const { name, password, email } = req.body;
 
   let existingUser;
   try {
@@ -47,7 +48,7 @@ const signUpUser = async (req, res, next) => {
   }
 
   const newUser = new User({
-    username,
+    name,
     email,
     image:
       "https://images.pexels.com/photos/5861322/pexels-photo-5861322.jpeg?cs=srgb&dl=pexels-athena-5861322.jpg&fm=jpg",

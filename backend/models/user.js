@@ -4,7 +4,7 @@ const uniquevalidator = require('mongoose-unique-validator');
 const Place = require('./place')
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
+  name: { type: String, required: true },
   email: { type: String, required: true, unique: true }, //unique creates an index for the email, which speeds up the query when the email is requestec
   password: { type: String, required: true, minlength: 6 },
   image: { type: String, required: true },
