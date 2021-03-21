@@ -30,8 +30,6 @@ const Users = () => {
     setError(null);
   };
 
-  console.log(loadedUsers)
-  
   return (
     <>
       <ErrorModal error={error} onClear={errorHandler} />
