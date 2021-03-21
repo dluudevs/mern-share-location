@@ -57,47 +57,37 @@ const Authenticate = () => {
 
     if (isLoginMode) {
       // run signup authentication if app is NOT in login mode
-      const responseData = await sendRequest(
-        "http://localhost:5000/api/users/login",
-        "POST",
-        JSON.stringify({
-          email: formState.inputs.email.value,
-          password: formState.inputs.password.value,
-        }),
-        {
-          "Content-Type": "application/json",
-        }
-      )
-      // if the request fails (network issue), the above function (from http-hook) will return undefined. At this point, the user should not be logged in
-      if ( responseData ) {
+      try {
+        await sendRequest(
+          "http://localhost:5000/api/users/login",
+          "POST",
+          JSON.stringify({
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+          {
+            "Content-Type": "application/json",
+          }
+        );
         auth.login();
-        console.log(responseData)
-      }
+        // if the request fails (network issue), the above function (from http-hook) will return undefined. At this point, the user should not be logged in. 
+        // All errors are handled by the hook, we simply have to catch it and prevent further code execution
+      } catch (e) {}
     } else {
-      // try {
-      //   setIsLoading(true); // this will update state immediately and not get batched with other state updates because it is inside an async function (async functions wrap everything inside of a promise, everything is executed asychronusly)
-      //   const response = await fetch("http://localhost:5000/api/users/signup", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       name: formState.inputs.name.value,
-      //       email: formState.inputs.email.value,
-      //       password: formState.inputs.password.value,
-      //     }),
-      //   });
-      //   const responseData = await response.json();
-      //   setIsLoading(false); // restore state to neutral before login as login will change context the state change may occur for a component that isn't being rendered
-      //   // 400 * 500 status code from response is not an error, but login is not successful. Response Ok is for all other status codes
-      //   if (!response.ok) {
-      //     throw new Error(responseData.message); // triggers catch block
-      //   }
-      //   auth.login();
-      // } catch (error) {
-      //   setError(error.message || "Something went wrong, please try again");
-      //   setIsLoading(false);
-      // }
+      try {
+        await sendRequest(
+          "http://localhost:5000/api/users/signup",
+          "POST",
+          JSON.stringify({
+            name: formState.inputs.name.value,
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+          { "Content-Type": "application/json" }
+        );
+        auth.login();
+        console.log('signup successful')
+      } catch (e) {}
     }
   };
 

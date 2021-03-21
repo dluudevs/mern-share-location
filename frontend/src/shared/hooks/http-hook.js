@@ -31,16 +31,17 @@ export const useHttpClient = () => {
 
         const responseData = await response.json();
 
-        // 400 * 500 status code from response is not an error, but login is not successful. Response Ok is for all other status codes
-        if (!responseData.ok) {
+        // 400 * 500 status code from response (non-JSONIFY response) is not an error, but login is not successful. Response Ok is for all other status codes
+        if (!response.ok) {
           throw new Error(responseData.message); // triggers catch block
         }
         setIsLoading(false);
         return responseData;
       } catch (e) {
+        console.log(e)
         setError(e.message);
         setIsLoading(false);
-        // returns undefined when there is an error
+        throw error;
       }
     }, []);
 
