@@ -82,7 +82,6 @@ const createPlace = async (req, res, next) => {
 
   // requires bodyparser middleware (setup in app.js)
   const { title, description, address, creator } = req.body;
-
   let coordinates;
   // geocode is an async function (always return promise) that returns a resolved promise or an error
   // try catch block used to catch the error pass to the next middleware (this is the same concept as error handling with an if statement)
@@ -136,6 +135,7 @@ const createPlace = async (req, res, next) => {
     user.places.push(createdPlace);
     await user.save({ session: sess });
     await sess.commitTransaction(); // save changes
+    console.log('place created')
   } catch (e) {
     const error = new HttpError("Creating place failed, please try again", 500);
     return next(error);

@@ -58,7 +58,7 @@ const Authenticate = () => {
     if (isLoginMode) {
       // run signup authentication if app is NOT in login mode
       try {
-        await sendRequest(
+        const responseData = await sendRequest(
           "http://localhost:5000/api/users/login",
           "POST",
           JSON.stringify({
@@ -69,13 +69,13 @@ const Authenticate = () => {
             "Content-Type": "application/json",
           }
         );
-        auth.login();
+        auth.login(responseData.user.id);
         // if the request fails (network issue), the above function (from http-hook) will return undefined. At this point, the user should not be logged in. 
         // All errors are handled by the hook, we simply have to catch it and prevent further code execution
       } catch (e) {}
     } else {
       try {
-        await sendRequest(
+        const responseData = await sendRequest(
           "http://localhost:5000/api/users/signup",
           "POST",
           JSON.stringify({
@@ -85,8 +85,7 @@ const Authenticate = () => {
           }),
           { "Content-Type": "application/json" }
         );
-        auth.login();
-        console.log('signup successful')
+        auth.login(responseData.user.id);
       } catch (e) {}
     }
   };

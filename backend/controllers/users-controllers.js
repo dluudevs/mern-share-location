@@ -85,7 +85,8 @@ const loginUser = async (req, res, next) => {
     return next(new HttpError("Password is incorrect", 401));
   }
 
-  return res.json({ message: "Login Successful!" });
+  // pass user object so we can access the ID - convert to object so it can be used with JavaScript
+  return res.json({ message: "Login Successful!", user: user.toObject({ getters: true }) });
 };
 
 exports.getAllUsers = getAllUsers;
