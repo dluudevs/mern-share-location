@@ -1,37 +1,41 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
-import PlaceList from '../components/PlaceList';
+import { useHttpClient } from "../../shared/hooks/http-hook";
+import ErrorModal from "../../shared/components/UIElements/ErrorModal";
+import LoadingSpinner from "../../shared/components/UIElements/LoadingSpinner";
 
-const DUMMY_PLACES = [
-  {
-    id: 'pl',
-    title: 'Empire State Building',
-    description: 'One of the most famous skyscrapers in the world!',
-    imageUrl:
-      'https://www.esbnyc.com/sites/default/files/styles/small_feature/public/2019-10/home_banner-min.jpg?itok=uZt-03Vw',
-    address: '20 W 34th St, New York, NY 10001, United States',
-    location: { lat: 40.7484, lng: -73.9857 },
-    creator: 'u1',
-  },
-  {
-    id: 'p2',
-    title: 'Empire State Building',
-    description: 'One of the most famous skyscrapers in the world!',
-    imageUrl:
-      'https://www.esbnyc.com/sites/default/files/styles/small_feature/public/2019-10/home_banner-min.jpg?itok=uZt-03Vw',
-    address: '20 W 34th St, New York, NY 10001, United States',
-    location: { lat: 40.7484, lng: -73.9857 },
-    creator: 'u2',
-  },
-];
-
+import PlaceList from "../components/PlaceList";
 const UserPlaces = () => {
   // hook returns an object with dynamic segments (eg., the colon in the route path="/:userId/places")
   // since this component's parent route has a dynamic element in the route, it is used here
   const userId = useParams().userId;
-  const loadedPlaces = DUMMY_PLACES.filter(places => places.creator === userId)
-  return <PlaceList items={loadedPlaces} />;
+  const { isLoading, error, sendRequest, clearError } = useHttpClient();
+  const [ loadedPlaces, setLoadedPlaces ] = useState([]);
+
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      try {
+        const responseData = await sendRequest(`http://localhost:5000/api/places/user/${userId}`);
+        setLoadedPlaces(responseData.places);
+      } catch (e) {}
+    }
+    fetchPlaces()
+  }, [ sendRequest, userId ])
+
+  console.log(loadedPlaces);
+
+  return (
+    <>
+      {isLoading && (
+        <div className="center">
+          <LoadingSpinner useOverlay />
+        </div>
+      )}
+      { !isLoading && loadedPlaces && <PlaceList items={loadedPlaces} /> }
+      {error && <ErrorModal error={error} onClear={clearError} />}
+    </>
+  );
 };
 
 export default UserPlaces;
